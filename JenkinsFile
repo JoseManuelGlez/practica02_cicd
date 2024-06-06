@@ -17,11 +17,11 @@ pipeline {
             steps {
                 script {
                     docker.image(DOCKER_IMAGE).inside {
-                        // Actualizar npm a la última versión
-                        sh 'npm install -g npm@latest'
-                        // Configurar un directorio de caché alternativo
+                        // Configurar un directorio de caché alternativo para npm
                         sh 'npm config set cache /tmp/.npm-cache --global'
+                        // Ejecutar npm install
                         sh 'npm install'
+                        // Ejecutar las pruebas
                         sh 'npm test'
                     }
                 }
@@ -36,3 +36,4 @@ pipeline {
         }
     }
 }
+
