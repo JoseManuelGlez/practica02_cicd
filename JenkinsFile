@@ -32,20 +32,17 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Detener y eliminar contenedores antiguos
-                    def CONTAINER_IDS = sh(script: "docker ps -q --filter 'ancestor=${DOCKER_IMAGE}'", returnStdout: true).trim()
-                    if (CONTAINER_IDS) {
-                        sh "docker stop $CONTAINER_IDS"
-                        sh "docker rm $CONTAINER_IDS"
+                    // Detener y eliminar contenedores antiguos con el mismo nombre
+                    def existingContainer = sh(script: "docker ps -aq -f name=node-hello-world-container", returnStdout: true).trim()
+                    if (existingContainer) {
+                        sh "docker stop $existingContainer"
+                        sh "docker rm $existingContainer"
                     } else {
-                        echo "No running containers found for image ${DOCKER_IMAGE}"
+                        echo "No running containers found with name node-hello-world-container"
                     }
 
-                    // Construir la nueva imagen
-                    sh "docker build -t ${DOCKER_IMAGE} ."
-
                     // Iniciar un nuevo contenedor
-                    sh "docker run -d -p 3000:3000 --name ${DOCKER_IMAGE}-container ${DOCKER_IMAGE}"
+                    sh "docker run -d -p 3000:3000 --name node-hello-world-container ${DOCKER_IMAGE}"
                 }
             }
         }
