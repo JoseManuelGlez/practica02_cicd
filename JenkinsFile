@@ -9,14 +9,14 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    docker.build('node-hello-world')
+                    docker.build(DOCKER_IMAGE)
                 }
             }
         }
         stage('Test') {
             steps {
                 script {
-                    docker.image('node-hello-world').inside {
+                    docker.image(DOCKER_IMAGE).inside {
                         withEnv(["NPM_CONFIG_CACHE=/tmp/.npm-cache"]) {
                             sh '''
                                 mkdir -p /tmp/.npm-cache
@@ -33,19 +33,19 @@ pipeline {
             steps {
                 script {
                     // Detener y eliminar contenedores antiguos
-                    def CONTAINER_IDS = sh(script: "docker ps -q --filter 'ancestor=${node-hello-world}'", returnStdout: true).trim()
+                    def CONTAINER_IDS = sh(script: "docker ps -q --filter 'ancestor=${DOCKER_IMAGE}'", returnStdout: true).trim()
                     if (CONTAINER_IDS) {
                         sh "docker stop $CONTAINER_IDS"
                         sh "docker rm $CONTAINER_IDS"
                     } else {
-                        echo "No running containers found for image ${node-hello-world}"
+                        echo "No running containers found for image ${DOCKER_IMAGE}"
                     }
 
                     // Construir la nueva imagen
-                    sh "docker build -t ${node-hello-world} ."
+                    sh "docker build -t ${DOCKER_IMAGE} ."
 
                     // Iniciar un nuevo contenedor
-                    sh "docker run -d -p 3000:3000 --name ${node-hello-world}-container ${node-hello-world}"
+                    sh "docker run -d -p 3000:3000 --name ${DOCKER_IMAGE}-container ${DOCKER_IMAGE}"
                 }
             }
         }
