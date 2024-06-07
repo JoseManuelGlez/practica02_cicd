@@ -17,12 +17,14 @@ pipeline {
             steps {
                 script {
                     docker.image(DOCKER_IMAGE).inside {
-                        // Configurar un directorio de caché alternativo para npm
-                        sh 'npm config set cache /tmp/.npm-cache --global'
-                        // Ejecutar npm install
-                        sh 'npm install'
-                        // Ejecutar las pruebas
-                        sh 'npm test'
+                        withEnv(["NPM_CONFIG_CACHE=/tmp/.npm-cache"]) {
+                            sh '''
+                                mkdir -p /tmp/.npm-cache
+                                chown -R $(id -u):$(id -g) /tmp/.npm-cache
+                                npm install --cache /tmp/.npm-cache
+                                npm test --cache /tmp/.npm-cache
+                            '''
+                        }
                     }
                 }
             }
@@ -30,23 +32,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Detener y eliminar contenedores antiguos
-                    def CONTAINER_IDS = sh(script: "docker ps -q --filter \"ancestor=node-hello-world\"", returnStdout: true).trim()
-                    if (CONTAINER_IDS) {
-                        sh "docker stop $CONTAINER_IDS"
-                        sh "docker rm $CONTAINER_IDS"
-                    } else {
-                        echo "No running containers found for image node-hello-world"
-                    }
-
-                    // Construir la nueva imagen
-                    sh "docker build -t node-hello-world ."
-
-                    // Iniciar un nuevo contenedor
-                    sh "docker run -d -p 3000:3000 --name node-hello-world-container node-hello-world"
+                    docker.image(DOCKER_IMAGE).run('-d -p 3000:3000')
                 }
             }
         }
     }
 }
-
