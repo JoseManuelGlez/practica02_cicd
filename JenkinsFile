@@ -42,7 +42,18 @@ pipeline {
                     }
 
                     // Iniciar un nuevo contenedor
-                    sh "docker run -d -p 3000:3000 --name node-hello-world-container ${DOCKER_IMAGE}"
+                    def runCommand = "docker run -d -p 3000:3000 --name node-hello-world-container ${DOCKER_IMAGE}"
+                    def containerId = sh(script: runCommand, returnStdout: true).trim()
+
+                    // Verificar el estado del contenedor
+                    def containerStatus = sh(script: "docker inspect -f '{{.State.Status}}' ${containerId}", returnStdout: true).trim()
+                    if (containerStatus != 'running') {
+                        echo "Container is not running. Showing logs..."
+                        sh "docker logs ${containerId}"
+                        error "Container failed to start."
+                    } else {
+                        echo "Container started successfully."
+                    }
                 }
             }
         }
