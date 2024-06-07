@@ -5,4 +5,4 @@ RUN npm install
 RUN npm install --save-dev mocha supertest
 COPY . .
 EXPOSE 3000
-CMD [ "node", "test.js"]
+CMD [ "node", "index.js"]
